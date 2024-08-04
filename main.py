@@ -146,13 +146,18 @@ while True:
     day_input = input("Введите номер дня от 1 до 31 (или 'stop' для завершения): ").strip()
     if day_input.lower() == 'stop':
         break
+
+    if day_input.lower() == 'next':
+        current_row_index = 2
+        continue
+
     try:
         day = int(day_input)
         value = input(f"Введите значение для дня {day} (например, '2.15' для 2 часов 15 минут): ")
         set_day_value(day, value, current_row_index)
 
         # Если работаем с днями 1-15
-        if current_row_index == 2:
+        if 1 <= day <= 15:
             # Считаем сумму значений в ячейках от B3 до P3
             sum_hours, sum_minutes = sum_values(1, 15, 2)
 
@@ -160,18 +165,18 @@ while True:
             if converted_hours_1_to_15 and sum_hours * 60 + sum_minutes >= converted_hours_1_to_15[0] * 60 + \
                     converted_hours_1_to_15[1]:
                 current_row_index = 4
-                switch_to_row_5 = True
+                #switch_to_row_5 = True
 
         # Если работаем с днями 16-31
-        if current_row_index == 4:
+        if 16 <= day <= 31:
             # Считаем сумму значений в ячейках от R3 до AG3
-            sum_hours, sum_minutes = sum_values(17, 32, 4)
+            sum_hours, sum_minutes = sum_values(17, 32, 2)
 
             # Если сумма значений равна или превышает hours_total, переключаемся на строку 7
             if converted_hours_total and sum_hours * 60 + sum_minutes >= converted_hours_total[0] * 60 + \
                     converted_hours_total[1]:
-                current_row_index = 6
-                switch_to_row_7 = True
+                current_row_index = 4
+                #switch_to_row_7 = True
 
     except ValueError:
         print("Пожалуйста, введите корректное число для дня.")
