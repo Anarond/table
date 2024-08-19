@@ -29,107 +29,95 @@ data[0, 33] = "Всего дней"
 # Заполняем ячейку AI1 значением "кол-во смен"
 data[0, 34] = "кол-во смен"
 
-# Функция для подсчета суммы значений в ячейках от start_col до end_col
-def sum_values(start_col, end_col, row_index):
-    total_value = 0.0
-    for col in range(start_col, end_col + 1):
-        value = data[row_index, col]
-        if value:
-            total_value += float(value)
-    return total_value
+# Запрос значения для первой половины месяца
+hours_1_to_15 = input(
+    "Введите значение первой половины месяца в формате десятичной дроби (например, '5.5' для 5 часов 30 минут): ")
 
-# Запрашиваем у пользователя количество часов
-hours_1_to_15 = input("Введите количество часов с 1 по 15 число (например, '5.5' для 5 часов 30 минут): ")
-hours_total = input("Введите количество часов Итоговое (например, '10.75' для 10 часов 45 минут): ")
-
-# Функция для форматирования числа
-def format_value(value):
-    return str(int(float(value))) if float(value).is_integer() else value
-
-# Заполняем ячейки Q3 и AH3 введенными значениями
+# Записываем значение в ячейку Q3 в формате float
 if hours_1_to_15:
-    data[2, 16] = format_value(hours_1_to_15)
-if hours_total:
-    data[2, 33] = format_value(hours_total)
+    try:
+        data[2, 16] = float(hours_1_to_15)
+    except ValueError:
+        print("Некорректный формат. Значение не будет учтено.")
 
-# Функция для установки значений в ячейки
-def set_day_value(day, value, row_index):
-    if 1 <= day <= 15:
-        col_index = day  # B3 соответствует 1, C3 соответствует 2 и т.д.
-    elif 16 <= day <= 31:
-        col_index = day + 1  # R3 соответствует 17, S3 соответствует 18 и т.д.
-    else:
-        print("Некорректный номер дня. Он должен быть от 1 до 31.")
-        return
+# Переменная для хранения суммы значений с 1 по 15 день
+sum_values = 0.0
 
-    # Устанавливаем значение в соответствующую ячейку
-    formatted_value = format_value(value)
-    data[row_index, col_index] = formatted_value
+# Получаем значение "итого дней" из ячейки Q3
+try:
+    itogo_days = float(hours_1_to_15)
+except ValueError:
+    itogo_days = 0.0
+    print("Некорректное значение в 'итого дней'. Оно будет считаться как 0.")
 
-    # Заполняем ячейку под текущей
-    if float(value) == 16.0:
-        data[row_index + 1, col_index] = "2"
-    elif float(value) == 8.0:
-        data[row_index + 1, col_index] = "6"
+# Переменная для отслеживания текущей строки ввода значений
+current_row = 2
 
-    # Заполняем следующую ячейку, если значение 16
-    if float(value) == 16.0:
-        if col_index < 31:
-            next_col_index = col_index + 1
-            data[row_index, next_col_index] = "8"
-            data[row_index + 1, next_col_index] = "6"
 
-# Изначально вводим значения в строку 3
-current_row_index = 2
+# Функция применения логики преобразования значений
+def apply_format_logic():
+    # Проходим по строкам 2 и 4
+    for row_index in [2, 4]:
+        for col_index in range(1, 16):  # Проходим по столбцам от B до P (1-15)
+            value = data[row_index, col_index]
+            if value == 24.0:
+                # Разбиваем значение '24' на 16 и 8 в текущей строке
+                data[row_index, col_index] = 16.0
+                data[row_index, col_index + 1] = 8.0
 
-# Запрашиваем номер дня и значение до тех пор, пока пользователь не введет 'stop'
+                # В строке ниже (на одну строку ниже текущей) заполняем 2 и 6
+                data[row_index + 1, col_index] = 2.0
+                data[row_index + 1, col_index + 1] = 6.0
+
+
+# Цикл ввода значений для дней
 while True:
-    day_input = input("Введите номер дня от 1 до 31 (или 'stop' для завершения): ").strip()
-    if day_input.lower() == 'stop':
+    day_input = input(
+        "Введите номер дня от 1 до 15 (или 'end' для завершения, или 'format' для применения логики): ").strip()
+
+    if day_input.lower() == 'end':
         break
 
-    if day_input.lower() == 'next':
-        current_row_index = 2
+    if day_input.lower() == 'format':
+        apply_format_logic()
         continue
 
     try:
         day = int(day_input)
-        value = input(f"Введите значение для дня {day} (например, '2.25' для 2 часов 15 минут): ")
-        set_day_value(day, value, current_row_index)
-
-        # Если работаем с днями 1-15
         if 1 <= day <= 15:
-            # Считаем сумму значений в ячейках от B3 до P3
-            sum_value = sum_values(1, 15, 2)
+            value = input(
+                f"Введите значение для дня {day} в формате десятичной дроби (например, '2.25' для 2 часов 15 минут): ").strip()
+            col_index = day  # Индекс столбца для B3 - P3 (1 - 15)
 
-            # Если сумма значений равна или превышает hours_1_to_15, переключаемся на строку 5
-            if hours_1_to_15 and sum_value >= float(hours_1_to_15):
-                current_row_index = 4
+            try:
+                value_float = float(value)
+                potential_sum = sum_values + value_float
 
-        # Если работаем с днями 16-31
-        if 16 <= day <= 31:
-            # Считаем сумму значений в ячейках от R3 до AG3
-            sum_value = sum_values(17, 32, 2)
+                if potential_sum > itogo_days:
+                    # Вычисляем остаток
+                    remainder = potential_sum - itogo_days
 
-            # Если сумма значений равна или превышает hours_total, переключаемся на строку 7
-            if hours_total and sum_value >= float(hours_total):
-                current_row_index = 4
+                    # Записываем значение без остатка в текущую строку
+                    data[current_row, col_index] = round(value_float - remainder, 2)
 
+                    # Переносим остаток на строку через одну ниже
+                    data[current_row + 2, col_index] = round(remainder, 2)
+
+                    # Обновляем текущую строку и сумму
+                    sum_values = remainder
+                    current_row += 2
+                else:
+                    # Если сумма не превышает, просто записываем значение
+                    data[current_row, col_index] = value_float
+                    sum_values += value_float
+
+            except ValueError:
+                print(f"Некорректное значение: {value}. Оно не будет учтено.")
+        else:
+            print("Некорректный номер дня. Укажите номер от 1 до 15.")
     except ValueError:
-        print("Пожалуйста, введите корректное число для дня.")
-
-# Считаем сумму значений в ячейках от B3 до P3 и от R3 до AG3
-start_col1 = 1
-end_col1 = 15
-sum_value_1 = sum_values(start_col1, end_col1, 2)
-
-start_col2 = 17
-end_col2 = 32
-sum_value_2 = sum_values(start_col2, end_col2, 2)
-
-# Выводим результаты
-print(f"Сумма значений в ячейках B3:P3: {sum_value_1:.1f}")
-print(f"Сумма значений в ячейках R3:AG3: {sum_value_2:.1f}")
+        print(
+            "Некорректный ввод. Пожалуйста, введите число от 1 до 15, 'end' для завершения или 'format' для применения логики.")
 
 # Создаем DataFrame без заголовков
 df = pd.DataFrame(data)
