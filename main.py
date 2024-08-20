@@ -63,7 +63,12 @@ def apply_format_logic():
             if value == 24.0:
                 # Разбиваем значение '24' на 16 и 8 в текущей строке
                 data[row_index, col_index] = 16.0
-                data[row_index, col_index + 1] = 8.0
+
+                # Проверяем, есть ли уже значение
+                if data[row_index, col_index + 1] is not None:
+                    data[row_index, col_index + 1] += 8.0
+                else:
+                    data[row_index, col_index + 1] = 8.0
 
                 # В строке ниже (на одну строку ниже текущей) заполняем 2 и 6
                 data[row_index + 1, col_index] = 2.0
@@ -93,6 +98,9 @@ while True:
                 value_float = float(value)
                 potential_total_hours = accumulated_hours + value_float
 
+                # Сохраняем последнее введённое значение
+                last_value_input = value_float
+
                 if potential_total_hours > total_days_first_half:
                     # Вычисляем остаток
                     remaining_hours = potential_total_hours - total_days_first_half
@@ -100,8 +108,16 @@ while True:
                     # Записываем значение без остатка в текущую строку
                     data[current_row, col_index] = round(value_float - remaining_hours, 2)
 
-                    # Переносим остаток на строку через одну ниже
-                    data[current_row + 2, col_index] = round(remaining_hours, 2)
+                    # Обрабатываем случай, если последний ввод был равен 24
+                    if last_value_input == 24:
+                        required_value_for_remaining = 16 - (value_float - remaining_hours)
+                        data[current_row + 2, col_index] = round(required_value_for_remaining, 2)
+                        data[current_row + 2, col_index + 1] = round(24 - (value_float - remaining_hours) - required_value_for_remaining)
+                        data[current_row + 3, col_index] = 2
+                        data[current_row + 3, col_index + 1] = 6
+                    else:
+                        # Переносим остаток на строку через одну ниже
+                        data[current_row + 2, col_index] = round(remaining_hours, 2)
 
                     # Обновляем текущую строку и сумму
                     accumulated_hours = remaining_hours
