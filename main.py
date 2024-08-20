@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 
 # Определим количество строк и столбцов
-num_rows = 9
-num_columns = 35
+total_rows = 9
+total_columns = 35
 
 # Генерируем пустые данные
-data = np.full((num_rows, num_columns), '', dtype=object)
+data = np.full((total_rows, total_columns), '', dtype=object)
 
 # Список значений для первой колонки
 first_column_values = ['', '', 'анест', 'ночные', 'совм', 'ночные', 'совм', 'ночные', 'празд']
@@ -30,24 +30,24 @@ data[0, 33] = "Всего дней"
 data[0, 34] = "кол-во смен"
 
 # Запрос значения для первой половины месяца
-hours_1_to_15 = input(
-    "Введите значение первой половины месяца в формате десятичной дроби (например, '5.5' для 5 часов 30 минут): ")
+first_half_hours = input(
+    "Введите значение первой половины месяца (например, '5.5' для 5 часов 30 минут): ")
 
 # Записываем значение в ячейку Q3 в формате float
-if hours_1_to_15:
+if first_half_hours:
     try:
-        data[2, 16] = float(hours_1_to_15)
+        data[2, 16] = float(first_half_hours)
     except ValueError:
         print("Некорректный формат. Значение не будет учтено.")
 
-# Переменная для хранения суммы значений с 1 по 15 день
-sum_values = 0.0
+# Переменная для АККУМУЛИРОВАНИЯ суммы значений с 1 по 15 день
+accumulated_hours = 0.0
 
 # Получаем значение "итого дней" из ячейки Q3
 try:
-    itogo_days = float(hours_1_to_15)
+    total_days_first_half = float(first_half_hours)
 except ValueError:
-    itogo_days = 0.0
+    total_days_first_half = 0.0
     print("Некорректное значение в 'итого дней'. Оно будет считаться как 0.")
 
 # Переменная для отслеживания текущей строки ввода значений
@@ -73,7 +73,7 @@ def apply_format_logic():
 # Цикл ввода значений для дней
 while True:
     day_input = input(
-        "Введите номер дня от 1 до 15 (или 'end' для завершения, или 'format' для применения логики): ").strip()
+        "Введите номер дня от 1 до 15 ('end' для завершения, 'format' для форматирования): ").strip()
 
     if day_input.lower() == 'end':
         break
@@ -86,30 +86,41 @@ while True:
         day = int(day_input)
         if 1 <= day <= 15:
             value = input(
-                f"Введите значение для дня {day} в формате десятичной дроби (например, '2.25' для 2 часов 15 минут): ").strip()
+                f"Введите значение для дня {day} (например, '2.25' для 2 часов 15 минут): ").strip()
             col_index = day  # Индекс столбца для B3 - P3 (1 - 15)
 
             try:
                 value_float = float(value)
-                potential_sum = sum_values + value_float
+                potential_total_hours = accumulated_hours + value_float
 
-                if potential_sum > itogo_days:
+                # Сохраняем последнее введённое значение
+                last_value_input = value_float
+
+                if potential_total_hours > total_days_first_half:
                     # Вычисляем остаток
-                    remainder = potential_sum - itogo_days
+                    remaining_hours = potential_total_hours - total_days_first_half
 
                     # Записываем значение без остатка в текущую строку
-                    data[current_row, col_index] = round(value_float - remainder, 2)
+                    data[current_row, col_index] = round(value_float - remaining_hours, 2)
 
-                    # Переносим остаток на строку через одну ниже
-                    data[current_row + 2, col_index] = round(remainder, 2)
+                    # Обрабатываем случай, если последний ввод был равен 24
+                    if last_value_input == 24:
+                        required_value_for_remaining = 16 - (value_float - remaining_hours)
+                        data[current_row + 2, col_index] = round(required_value_for_remaining, 2)
+                        data[current_row + 2, col_index + 1] = round(24 - (value_float - remaining_hours) - required_value_for_remaining)
+                        data[current_row + 3, col_index] = 2
+                        data[current_row + 3, col_index + 1] = 6
+                    else:
+                        # Переносим остаток на строку через одну ниже
+                        data[current_row + 2, col_index] = round(remaining_hours, 2)
 
                     # Обновляем текущую строку и сумму
-                    sum_values = remainder
+                    accumulated_hours = remaining_hours
                     current_row += 2
                 else:
                     # Если сумма не превышает, просто записываем значение
                     data[current_row, col_index] = value_float
-                    sum_values += value_float
+                    accumulated_hours += value_float
 
             except ValueError:
                 print(f"Некорректное значение: {value}. Оно не будет учтено.")
