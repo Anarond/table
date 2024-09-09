@@ -30,8 +30,10 @@ data[0, 33] = "Всего дней"
 data[0, 34] = "кол-во смен"
 
 # Запрос значения для первой половины месяца
-first_half_hours = input(
-    "Введите значение первой половины месяца (например, '5.5' для 5 часов 30 минут): ")
+#first_half_hours = input(
+#    "Введите значение первой половины месяца (например, '5.5' для 5 часов 30 минут): ")
+
+first_half_hours = 78.0
 
 # Записываем значение в ячейку Q3 в формате float
 if first_half_hours:
@@ -65,14 +67,16 @@ def apply_format_logic():
                 data[row_index, col_index] = 16.0
 
                 # Проверяем, есть ли уже значение
-                if data[row_index, col_index + 1] is not None:
-                    data[row_index, col_index + 1] += 8.0
+                if data[row_index, col_index + 1] != '':
+                    #print(row_index)
+                    #print(col_index + 1)
+                    data[row_index, col_index + 1]  = float(data[row_index, col_index + 1]) + 8
                 else:
-                    data[row_index, col_index + 1] = 8.0
+                    data[row_index, col_index + 1] = 8
 
                 # В строке ниже (на одну строку ниже текущей) заполняем 2 и 6
-                data[row_index + 1, col_index] = 2.0
-                data[row_index + 1, col_index + 1] = 6.0
+                data[row_index + 1, col_index] = 2
+                data[row_index + 1, col_index + 1] = 6
 
 
 # Цикл ввода значений для дней
@@ -112,7 +116,7 @@ while True:
                     if last_value_input == 24:
                         required_value_for_remaining = 16 - (value_float - remaining_hours)
                         data[current_row + 2, col_index] = round(required_value_for_remaining, 2)
-                        data[current_row + 2, col_index + 1] = round(24 - (value_float - remaining_hours) - required_value_for_remaining)
+                        data[current_row + 2, col_index + 1] = round(24 - (value_float - remaining_hours) - required_value_for_remaining, 2)
                         data[current_row + 3, col_index] = 2
                         data[current_row + 3, col_index + 1] = 6
                     else:
